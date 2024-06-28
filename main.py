@@ -5,15 +5,8 @@ from pages.speed import Speed
 
 
 def main(page: ft.Page):
-    page.scroll = ft.ScrollMode.AUTO
-
     # Refs
     icone_tema = ft.Ref[ft.IconButton]()
-
-    def page_resize(e):
-        print("New page size:", page.window.width, page.window.height)
-
-    page.window.on_resized = page_resize
 
     def change_route(e):
         match e.control.selected_index:
