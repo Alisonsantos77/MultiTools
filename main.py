@@ -27,11 +27,11 @@ def main(page: ft.Page):
                 content=ft.Row(
                     [
                         ft.Text("Multi Tools", size=30, weight=ft.FontWeight.W_900),
-                        ft.Icon(ft.icons.SETTINGS)
-
-                    ]
+                        ft.Icon(ft.icons.SETTINGS, size=30),
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 ),
-                padding=10,
+                padding=ft.padding.all(10),
             ),
             ft.Divider(height=2),
             ft.Container(height=12),
@@ -49,6 +49,19 @@ def main(page: ft.Page):
                 label='Weather Now',
                 icon=ft.icons.WATER_DROP_OUTLINED,
                 selected_icon_content=ft.FilledButton(text="Abrir")  # 2
+            ),
+            ft.Container(expand=True),
+            ft.Divider(height=2),
+
+            ft.Container(
+                content=ft.Text(
+                    "Desenvolvido por Alison Santos",
+                    size=14,
+                    weight=ft.FontWeight.W_500,
+                    color=ft.colors.GREY_600,
+                ),
+                alignment=ft.alignment.center,
+                padding=ft.padding.all(10),
             ),
         ],
         tile_padding=ft.padding.all(5),
