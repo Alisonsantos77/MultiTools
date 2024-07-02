@@ -1,47 +1,75 @@
-import flet as ft
-import yt_dlp
 import os
 import subprocess
 import threading
 import logging
 import re
+from time import sleep
+import yt_dlp
+import flet as ft
 
 # Variável global para controle de cancelamento e gerenciamento de downloads
-download_canceled = False
-current_download_type = None
-download_type = None
+DOWNLOAD_CANCELED = False
+CURRENT_DOWNLOAD_TYPE = None
+DOWNLOAD_TYPE = None
 
 
 def Youtube(page: ft.Page):
-    page.scroll = ft.ScrollMode.AUTO  # Habilita o scroll para todas as rotas
     page.title = "Youtube Downloader"
+    page.window.height = 750
+    page.window.width = 700
+    page.window.max_height = 750
+    page.window.max_width = 700
 
-    global download_canceled, current_download_type
+    SNACK_TEXT = ft.Ref[ft.Text]()
+    def handle_resize(e):
+        print(f"Window resized to: {page.window.width}x{page.window.height}")
+        if page.window.height < 666.0:
+            page.scroll = ft.ScrollMode.AUTO
+            page.update()
+        else:
+            page.scroll = ft.ScrollMode.HIDDEN
+            page.update()
+
+    page.on_resized = handle_resize
+
+    global DOWNLOAD_CANCELED, CURRENT_DOWNLOAD_TYPE
 
     # Variável para armazenar o caminho do diretório selecionado
     directory_selected = ft.Text(visible=False)
 
     # Variáveis para armazenar o progresso do download e o nome do arquivo
-    barra_progress_video = ft.ProgressBar(width=300, bgcolor=ft.colors.GREY_200, color=ft.colors.RED, visible=False)
-    barra_progress_audio = ft.ProgressBar(width=300, bgcolor=ft.colors.RED_900, color=ft.colors.WHITE, visible=False)
+    barra_progress_video = ft.ProgressBar(
+        width=300,
+        col=8,
+        bgcolor=ft.colors.GREY_200,
+        color=ft.colors.RED,
+        visible=False
+    )
+    barra_progress_audio = ft.ProgressBar(
+        width=300,
+        col=8,
+        bgcolor=ft.colors.RED_900,
+        color=ft.colors.WHITE,
+        visible=False
+    )
 
     # Função para tratar o resultado da seleção do diretório
     def get_directory_result(e: ft.FilePickerResultEvent):
         directory_selected.value = e.path if e.path else "Nenhum diretório selecionado!"
         directory_selected.update()
         if directory_selected.value != "Nenhum diretório selecionado!":
-            if current_download_type == 'video':
+            if CURRENT_DOWNLOAD_TYPE == 'video':
                 threading.Thread(target=download_video).start()
-            elif current_download_type == 'audio':
+            elif CURRENT_DOWNLOAD_TYPE == 'audio':
                 threading.Thread(target=download_audio).start()
 
     # Configuração do diálogo de seleção de diretório
     get_directory_dialog = ft.FilePicker(on_result=get_directory_result)
 
     # Função para abrir o diálogo de seleção de diretório
-    def abrir_diretorio(e, download_type):
-        global current_download_type
-        current_download_type = download_type
+    def abrir_diretorio(e, DOWNLOAD_TYPE):
+        global CURRENT_DOWNLOAD_TYPE
+        CURRENT_DOWNLOAD_TYPE = DOWNLOAD_TYPE
         get_directory_dialog.get_directory_path()
 
     # Adicionar o diálogo de seleção de diretório à sobreposição da página
@@ -50,7 +78,8 @@ def Youtube(page: ft.Page):
     # Configuração do SnackBar
     snack_bar = ft.SnackBar(
         content=ft.Text(
-            '',
+            value='',
+            ref=SNACK_TEXT,
             size=20,
             color=ft.colors.RED,
             weight=ft.FontWeight.W_600,
@@ -64,9 +93,11 @@ def Youtube(page: ft.Page):
 
     # Função para cancelar o download
     def cancel_download(e):
-        global download_canceled
-        download_canceled = True
-        snack_bar.content.value = "Download cancelado!"
+        global DOWNLOAD_CANCELED
+        DOWNLOAD_CANCELED = True
+        SNACK_TEXT.current.value = "Download cancelado!"
+        SNACK_TEXT.current.color = ft.colors.WHITE
+        SNACK_TEXT.current.update()
         snack_bar.bgcolor = ft.colors.RED_500
         snack_bar.open = True
         snack_bar.update()
@@ -91,40 +122,48 @@ def Youtube(page: ft.Page):
     )
 
     def progress_hook(d):
-        if download_canceled:
+        if DOWNLOAD_CANCELED:
             raise Exception("Download cancelado pelo usuário")
 
         # Verificar tipo de download e atualizar a barra de progresso correspondente
         if d['status'] == 'downloading':
-            if download_type == 'video':
+            if DOWNLOAD_TYPE == 'video':
+                animacao_video.src = 'https://lottie.host/e0d71710-c179-44cc-bc43-7950c1ab9ffc/3yj7jiRrAx.json'
+                animacao_video.update()
                 input_text_video.disabled = True
                 input_text_video.update()
                 btn_download_video.disabled = True
                 btn_download_video.update()
                 barra_progress_video.visible = True
-                barra_progress_video.value = float(d['_percent_str'].strip('%')) / 100
+                barra_progress_video.value = float(
+                    d['_percent_str'].strip('%')) / 100
                 barra_progress_video.update()
-                snack_bar.content.value = f"Baixando: {d['filename']}"
+                SNACK_TEXT.current.value = f"Baixando: {d['filename']}"
+                SNACK_TEXT.current.color = ft.colors.RED
+                SNACK_TEXT.current.update()
                 snack_bar.bgcolor = ft.colors.WHITE
-                snack_bar.content.color = ft.colors.RED
                 snack_bar.open = True
                 snack_bar.update()
-            elif download_type == 'audio':
+            elif DOWNLOAD_TYPE == 'audio':
                 input_text_audio.disabled = True
                 input_text_audio.update()
                 btn_download_audio.disabled = True
                 btn_download_audio.update()
                 barra_progress_audio.visible = True
-                barra_progress_audio.value = float(d['_percent_str'].strip('%')) / 100
+                barra_progress_audio.value = float(
+                    d['_percent_str'].strip('%')) / 100
                 barra_progress_audio.update()
-                snack_bar.content.value = f"Baixando: {d['filename']}"
+                SNACK_TEXT.current.value = f"Baixando: {d['filename']}"
+                SNACK_TEXT.current.color = ft.colors.RED
+                SNACK_TEXT.current.update()
                 snack_bar.bgcolor = ft.colors.WHITE
-                snack_bar.content.color = ft.colors.RED
                 snack_bar.open = True
                 snack_bar.update()
             # Lidar com o estado de finalização do download
         elif d['status'] == 'finished':
-            if download_type == 'video':
+            if DOWNLOAD_TYPE == 'video':
+                animacao_video.src = 'https://lottie.host/5b3e7b47-d1a0-4c7b-bc51-070d2e81b97b/6Az1KFy5OK.json'
+                animacao_video.update()
                 input_text_video.disabled = False
                 input_text_video.update()
                 btn_download_video.disabled = False
@@ -132,7 +171,7 @@ def Youtube(page: ft.Page):
                 barra_progress_video.visible = False
                 barra_progress_video.value = 1.0
                 barra_progress_video.update()
-            elif download_type == 'audio':
+            elif DOWNLOAD_TYPE == 'audio':
                 input_text_audio.disabled = False
                 input_text_audio.update()
                 btn_download_audio.disabled = False
@@ -141,9 +180,10 @@ def Youtube(page: ft.Page):
                 barra_progress_audio.value = 1.0
                 barra_progress_audio.update()
             # Atualizar Snackbar ao concluir o download
-            snack_bar.content.value = f"Download concluído: {d['filename']}"
+            SNACK_TEXT.current.value = f"Download concluído: {d['filename']}"
+            SNACK_TEXT.current.color = ft.colors.WHITE
+            SNACK_TEXT.current.update()
             snack_bar.bgcolor = ft.colors.BLACK12
-            snack_bar.content.color = ft.colors.WHITE
             snack_bar.open = True
             snack_bar.update()
 
@@ -151,7 +191,8 @@ def Youtube(page: ft.Page):
         # Regex para verificar se é uma URL válida
         regex = re.compile(
             r'^(?:http|ftp)s?://'  # http:// ou https://
-            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domínio
+            # domínio
+            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'
             r'localhost|'  # localhost
             r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|'  # endereço de IP
             r'\[?[A-F0-9]*:[A-F0-9:]+]?)'  # endereço de IP versão 6
@@ -162,22 +203,30 @@ def Youtube(page: ft.Page):
         return re.match(regex, url) is not None and 'youtube.com' in url
 
     def download_video():
-        global download_canceled, download_type
-        download_canceled = False
-        download_type = 'video'
+        global DOWNLOAD_CANCELED, DOWNLOAD_TYPE
+        DOWNLOAD_CANCELED = False
+        DOWNLOAD_TYPE = 'video'
         url = input_text_video.value
         if not url or not is_valid_url(url):
-            snack_bar.content.value = "Por favor, insira um URL válido do YouTube."
+            input_text_video.color = ft.colors.RED
+            input_text_video.update()
+            sleep(2)
+            input_text_video.value = ""
+            input_text_video.color = ft.colors.BLACK
+            input_text_video.update()
+            SNACK_TEXT.current.value = "Por favor, insira um URL válido do YouTube."
+            SNACK_TEXT.current.color = ft.colors.WHITE
+            SNACK_TEXT.current.update()
             snack_bar.bgcolor = ft.colors.RED_900
-            snack_bar.content.color = ft.colors.WHITE
             snack_bar.open = True
             snack_bar.update()
             return
 
         # Indicar início do download
-        snack_bar.content.value = "Download de vídeo iniciado..."
+        SNACK_TEXT.current.value = "Download de vídeo iniciado. Por favor, aguarde enquanto baixamos o vídeo do YouTube."
+        SNACK_TEXT.current.color = ft.colors.RED
+        SNACK_TEXT.current.update()
         snack_bar.bgcolor = ft.colors.WHITE
-        snack_bar.content.color = ft.colors.RED
         snack_bar.open = True
         snack_bar.update()
 
@@ -194,52 +243,70 @@ def Youtube(page: ft.Page):
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
-            if not download_canceled:
-                snack_bar.content.value = "Download concluído com sucesso!"
+            if not DOWNLOAD_CANCELED:
+                SNACK_TEXT.current.value = ("Download de vídeo concluído com sucesso! O arquivo foi salvo no diretório "
+                                           "selecionado.")
+                SNACK_TEXT.current.color = ft.colors.WHITE
+                SNACK_TEXT.current.update()
                 snack_bar.bgcolor = ft.colors.BLACK12
-                snack_bar.content.color = ft.colors.WHITE
                 snack_bar.open = True
                 snack_bar.update()
                 input_text_video.value = ""
                 input_text_video.update()
                 btn_folder_video.icon_color = ft.colors.RED
                 btn_folder_video.disabled = False
-                btn_folder_audio.tooltip = "Abrir pasta de áudio"
+                btn_folder_video.tooltip = "Ver downloads"
                 btn_folder_video.update()
         except yt_dlp.DownloadError as yt_err:
-            snack_bar.content.value = f"Erro no download do vídeo: {str(yt_err)}"
+            if DOWNLOAD_CANCELED:
+                SNACK_TEXT.current.value = "Download cancelado pelo usuário."
+            else:
+                SNACK_TEXT.current.value = (f"Erro no download do vídeo: {str(yt_err)}. Verifique sua conexão à internet e "
+                                       f"se o URL é acessível.")
+            SNACK_TEXT.current.color = ft.colors.WHITE
+            SNACK_TEXT.current.update()
             snack_bar.bgcolor = ft.colors.RED_900
-            snack_bar.content.color = ft.colors.WHITE
             snack_bar.open = True
             snack_bar.update()
         except Exception as ex:
-            logging.error(f"Erro inesperado: {str(ex)}")
-            snack_bar.content.value = f"Erro inesperado: {str(ex)}"
+            if DOWNLOAD_CANCELED:
+                SNACK_TEXT.current.value = "Download cancelado pelo usuário."
+            else:
+                logging.error('Erro inesperado no vídeo: %s', str(ex))
+                SNACK_TEXT.current.value = ('Erro inesperado no download de vídeo: %s. Por favor, tente novamente '
+                                       'ou contate o suporte se o problema persistir.') % str(ex)
+            SNACK_TEXT.current.color = ft.colors.WHITE
+            SNACK_TEXT.current.update()
             snack_bar.bgcolor = ft.colors.RED_900
-            snack_bar.content.color = ft.colors.WHITE
             snack_bar.open = True
             snack_bar.update()
         finally:
-            cancel_button_video.visible = False
-            cancel_button_video.update()
+            if DOWNLOAD_CANCELED:
+                cancel_button_video.visible = False
+                cancel_button_video.update()
+            else:
+                cancel_button_video.visible = False
+                cancel_button_video.update()
 
     def download_audio():
-        global download_canceled, download_type
-        download_type = 'audio'
-        download_canceled = False  # Reset the cancellation flag
+        global DOWNLOAD_CANCELED, DOWNLOAD_TYPE
+        DOWNLOAD_TYPE = 'audio'
+        DOWNLOAD_CANCELED = False  # Reset the cancellation flag
         url_audio = input_text_audio.value
         if not url_audio or not is_valid_url(url_audio):
-            snack_bar.content.value = "Por favor, insira um URL válido do YouTube."
+            SNACK_TEXT.current.value = "Por favor, insira um URL válido do YouTube."
+            SNACK_TEXT.current.color = ft.colors.WHITE
+            SNACK_TEXT.current.update()
             snack_bar.bgcolor = ft.colors.RED_900
-            snack_bar.content.color = ft.colors.WHITE
             snack_bar.open = True
             snack_bar.update()
             return
 
         # Indicar início do download
-        snack_bar.content.value = "Download do aúdio iniciado..."
+        SNACK_TEXT.current.value = "Download de áudio iniciado. Por favor, aguarde enquanto baixamos o áudio do YouTube."
+        SNACK_TEXT.current.color = ft.colors.RED
+        SNACK_TEXT.current.update()
         snack_bar.bgcolor = ft.colors.WHITE
-        snack_bar.content.color = ft.colors.RED
         snack_bar.open = True
         snack_bar.update()
 
@@ -260,29 +327,35 @@ def Youtube(page: ft.Page):
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url_audio])
-            if not download_canceled:
-                snack_bar.content.value = "Download de áudio concluído com sucesso!"
+            if not DOWNLOAD_CANCELED:
+                SNACK_TEXT.current.value = ("Download de áudio concluído com sucesso! O arquivo foi salvo no diretório "
+                                           "selecionado.")
+                SNACK_TEXT.current.color = ft.colors.WHITE
+                SNACK_TEXT.current.update()
                 snack_bar.bgcolor = ft.colors.BLACK12
-                snack_bar.content.color = ft.colors.WHITE
                 snack_bar.open = True
                 snack_bar.update()
                 input_text_audio.value = ""
                 input_text_audio.update()
                 btn_folder_audio.icon_color = ft.colors.WHITE
                 btn_folder_audio.disabled = False
-                btn_folder_audio.tooltip = "Abrir pasta de áudio"
+                btn_folder_audio.tooltip = "Ver aúdios"
                 btn_folder_audio.update()
         except yt_dlp.DownloadError as yt_err:
-            snack_bar.content.value = f"Erro no download de áudio: {str(yt_err)}"
+            SNACK_TEXT.current.value = (f"Erro no download de áudio: {str(yt_err)}. Verifique sua conexão à internet e "
+                                       f"se o URL é acessível.")
+            SNACK_TEXT.current.color = ft.colors.WHITE
+            SNACK_TEXT.current.update()
             snack_bar.bgcolor = ft.colors.RED_900
-            snack_bar.content.color = ft.colors.WHITE
             snack_bar.open = True
             snack_bar.update()
         except Exception as ex:
-            logging.error(f"Erro inesperado no aúdio: {str(ex)}")
-            snack_bar.content.value = f"Erro inesperado no aúdio: {str(ex)}"
+            logging.error('Erro inesperado no aúdio: %s', str(ex))
+            SNACK_TEXT.current.value = ('Erro inesperado no download de áudio: %s. Por favor, tente novamente '
+                                       'ou contate o suporte se o problema persistir.') % str(ex)
+            SNACK_TEXT.current.color = ft.colors.WHITE    
+            SNACK_TEXT.current.update()
             snack_bar.bgcolor = ft.colors.RED_900
-            snack_bar.content.color = ft.colors.WHITE
             snack_bar.open = True
             snack_bar.update()
         finally:
@@ -301,6 +374,17 @@ def Youtube(page: ft.Page):
         else:
             print("Diretório inválido ou não selecionado.")
 
+    # Função para obter o texto do clipboard e definir no campo de texto
+    def paste_video(e):
+        clipboard_text = page.get_clipboard()
+        input_text_video.value = clipboard_text
+        input_text_video.update()
+
+    def paste_audio(e):
+        clipboard_text = page.get_clipboard()
+        input_text_audio.value = clipboard_text
+        input_text_audio.update()
+
     side_video = ft.Container(
         padding=ft.padding.all(30),
         bgcolor=ft.colors.WHITE,
@@ -312,7 +396,7 @@ def Youtube(page: ft.Page):
                 ft.Row(
                     alignment=ft.MainAxisAlignment.CENTER,
                     controls=[
-                        ft.Lottie(
+                        animacao_video := ft.Lottie(
                             src='https://lottie.host/5b3e7b47-d1a0-4c7b-bc51-070d2e81b97b/6Az1KFy5OK.json',
                             width=250,
                             repeat=True,
@@ -322,18 +406,34 @@ def Youtube(page: ft.Page):
                         ),
                     ]
                 ),
-                ft.Row(
+                ft.ResponsiveRow(
                     alignment=ft.MainAxisAlignment.CENTER,
+                    col=12,
                     controls=[
                         barra_progress_video,
                     ]
                 ),
-                input_text_video := ft.TextField(
-                    col={'xs': 10, 'sm': 6},
-                    hint_text='Insira seu link',
-                    text_size=18,
-                    border=ft.InputBorder.UNDERLINE,
-                    border_color=ft.colors.RED,
+                ft.ResponsiveRow(
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    col=12,
+                    spacing=10,
+                    controls=[
+                        input_text_video := ft.TextField(
+                            hint_text='Insira seu link',
+                            color=ft.colors.BLACK,
+                            col=8,
+                            text_size=18,
+                            border=ft.InputBorder.UNDERLINE,
+                            border_color=ft.colors.RED,
+                        ),
+                        ft.IconButton(
+                            icon=ft.icons.CONTENT_PASTE,
+                            col=2,
+                            icon_color=ft.colors.RED,
+                            tooltip="Colar do Clipboard",
+                            on_click=paste_video,
+                        ),
+                    ]
                 ),
                 ft.Row(
                     alignment=ft.MainAxisAlignment.CENTER,
@@ -347,7 +447,7 @@ def Youtube(page: ft.Page):
                             style=ft.ButtonStyle(
                                 color=ft.colors.RED,
                                 shape=ft.RoundedRectangleBorder(radius=10),
-                                bgcolor=ft.colors.TRANSPARENT,
+                                bgcolor=ft.colors.TRANSPARENT
                             ),
                         ),
                         btn_folder_video := ft.IconButton(
@@ -403,19 +503,33 @@ def Youtube(page: ft.Page):
                         ),
                     ]
                 ),
-                ft.Row(
+                ft.ResponsiveRow(
                     alignment=ft.MainAxisAlignment.CENTER,
                     controls=[
                         barra_progress_audio,
                     ]
                 ),
-                input_text_audio := ft.TextField(
-                    col={'xs': 10, 'sm': 6},
-                    hint_text='Insira seu link',
-                    text_size=18,
-                    border=ft.InputBorder.UNDERLINE,
-                    border_color=ft.colors.RED,
-                    color=ft.colors.WHITE
+                ft.ResponsiveRow(
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    col=12,
+                    spacing=10,
+                    controls=[
+                        input_text_audio := ft.TextField(
+                            hint_text='Insira seu link',
+                            color=ft.colors.BLACK,
+                            col=8,
+                            text_size=18,
+                            border=ft.InputBorder.UNDERLINE,
+                            border_color=ft.colors.RED,
+                        ),
+                        ft.IconButton(
+                            icon=ft.icons.CONTENT_PASTE,
+                            col=2,
+                            icon_color=ft.colors.RED,
+                            tooltip="Colar do Clipboard",
+                            on_click=paste_audio,
+                        ),
+                    ]
                 ),
                 ft.Row(
                     alignment=ft.MainAxisAlignment.CENTER,
