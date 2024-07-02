@@ -1,10 +1,12 @@
+import threading
 import flet as ft
 import speedtest
-import threading
 
 
 def Speed(page: ft.Page):
+    page.title = "Speed Test"
 
+    # Função para executar o teste de velocidade
     def run_speed_test():
         try:
             btn_Start.visible = False
@@ -72,9 +74,11 @@ def Speed(page: ft.Page):
 
         threading.Timer(4.0, close_snackbar).start()
 
+    # Função de iniciar o teste de velocidade
     def start_test(e):
         threading.Thread(target=run_speed_test).start()
 
+    # Função de efeito hover na imagem
     def image_hover(e):
         imagem = e.control.content
         imagem.scale = ft.Scale(scale=1.2) if imagem.scale.scale == 1 else ft.Scale(scale=1)
@@ -99,14 +103,15 @@ def Speed(page: ft.Page):
     page.overlay.append(snack_bar)
 
     loading = ft.Lottie(
-            src='https://lottie.host/a05785c9-9e0a-4c0d-a13c-dfb322a8ac0c/RfzyzcV0QZ.json',
-            repeat=True,
-            reverse=False,
-            animate=True,
-            visible=False,
-            height=400
-        )
+        src='https://lottie.host/a05785c9-9e0a-4c0d-a13c-dfb322a8ac0c/RfzyzcV0QZ.json',
+        repeat=True,
+        reverse=False,
+        animate=True,
+        visible=False,
+        height=400
+    )
 
+    # Definindo o layout da página speedtest
     speedtest_page = ft.Column(
         horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
         controls=[
