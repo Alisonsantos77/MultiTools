@@ -1,8 +1,14 @@
 import flet as ft
+import requests
+from icecream import ic
+from datetime import datetime
+import aiohttp
+import logging
 
 
 def Weather(page: ft.Page):
     page.title = "Weather App"
+    key_weather = "xxxxxxxxxxxxxxxx"
 
     # Refs
     ClimaNowText = ft.Ref[ft.Text]()
@@ -11,14 +17,155 @@ def Weather(page: ft.Page):
     IconHours = ft.Ref[ft.Image]()
     CityName = ft.Ref[ft.TextSpan]()
     RowCards = ft.Ref[ft.Row]()
-    UnitsSelector = ft.Ref[ft.Dropdown]()
+    RowDays = ft.Ref[ft.Row]()
 
     gl = ft.Geolocator()
     page.overlay.append(gl)
 
-    def handle_get_current_position(e):
+    # Definir o dropdown para seleção de idioma
+    LanguageSelector = ft.Dropdown(
+        label="Idioma",
+        hint_text="Escolha o idioma",
+        options=[
+            ft.dropdown.Option("pt_br", "Português"),
+            ft.dropdown.Option("en", "Inglês"),
+            ft.dropdown.Option("es", "Espanhol")
+        ],
+    )
+
+    # Definir o dropdown para seleção de unidades
+    UnitsSelector = ft.Dropdown(
+        label="Unidade de Medida",
+        hint_text="Escolha a unidade",
+        options=[
+            ft.dropdown.Option("metric", "Métrico (°C)"),
+            ft.dropdown.Option("imperial", "Imperial (°F)"),
+            ft.dropdown.Option("standard", "Padrão (K)")
+        ],
+    )
+
+    def weather(e):
+        cidade = searchInput.value
+        if not cidade:
+            print("Por favor, digite um nome de cidade válido.")
+            return
+        lang = LanguageSelector.value
+        units = UnitsSelector.value
+
+        url_current = f"https://api.openweathermap.org/data/2.5/weather?q={cidade.capitalize()}&units={units}&appid={key_weather}&lang={lang}"
+        try:
+            response_current = requests.get(url_current)
+            response_current.raise_for_status()
+            data_current = response_current.json()
+            ic(data_current)
+            # Verificação de resposta
+            if response_current.status_code != 200:
+                logging.error(f"Falha na requisição: {response_current.status_code} - {response_current.reason}")
+                return
+            ic(data_current)
+            if 'weather' in data_current and 'main' in data_current:
+                # Data atual
+                dateNow.value = datetime.now().strftime("%d/%m/%Y")
+                dateNow.update()
+                # Atualiza icone
+                icone = data_current['weather'][0]['icon']
+                iconeNow.src = f'https://openweathermap.org/img/wn/{icone}@2x.png'
+                iconeNow.update()
+                # Temperatura
+                temp = data_current['main']['temp']
+                unit_symbol = '°C' if units == 'metric' else '°F' if units == 'imperial' else 'K'
+                temperatureNow.text = f'{temp:.0f}{unit_symbol}'
+                temperatureNow.update()
+                # Descrição do Clima
+                weather_description = data_current['weather'][0]['description']
+                descriptionNow.value = f"{weather_description.capitalize()}"
+                descriptionNow.update()
+                # Humidade
+                humidity = data_current['main']['humidity']
+                humidityValue.value = f"{humidity}%"
+                humidityValue.update()
+                # Velocidade do vento
+                windspeed = data_current['wind']['speed']
+                windSpeedValue.value = f"{windspeed} km/h"
+                windSpeedValue.update()
+                # Nome da cidade buscada
+                cityName.value = data_current['name']
+                cityName.update()
+                # Verificar e exibir a quantidade de rainfall, se disponível
+                if 'rain' in data_current:
+                    rainfall = data_current['rain'].get('1h', 0)  # Obtém a precipitação da última hora, se disponível
+                    max_rainfall = 10.0  # Valor de referência para cálculo da porcentagem
+                    rainfall_percentage = (rainfall / max_rainfall) * 100
+                    rainFallValue.value = f"{rainfall:.2f} mm"
+                    rainFallValue.update()
+                    logging.info(f"Rainfall: {rainfall}mm, which is {rainfall_percentage:.2f}% of the reference value.")
+                else:
+                    logging.info("No rainfall data available.")
+
+                logging.info("Clima atualizado com sucesso!")
+            else:
+                logging.warning("Dados incompletos na resposta da API.")
+        except requests.exceptions.RequestException as err:
+            logging.error(f"Erro na requisição: {err}")
+
+    def get_weather_by_coordinates(e):
         position = gl.get_current_position()
-        print(f"Posição Atual: ({position.latitude}, {position.longitude})")
+        lat = position.latitude
+        lon = position.longitude
+        url_coordinates = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={key_weather}&units=metric&lang=pt_br"
+        try:
+            response_current = requests.get(url_coordinates)
+            response_current.raise_for_status()
+            data_current = response_current.json()
+            ic(data_current)
+            # Verificação de resposta
+            if response_current.status_code != 200:
+                logging.error(f"Falha na requisição: {response_current.status_code} - {response_current.reason}")
+                return
+            ic(data_current)
+            if 'weather' in data_current and 'main' in data_current:
+                # Data atual
+                dateNow.value = datetime.now().strftime("%d/%m/%Y")
+                dateNow.update()
+                # Atualiza icone
+                icone = data_current['weather'][0]['icon']
+                iconeNow.src = f'https://openweathermap.org/img/wn/{icone}@2x.png'
+                iconeNow.update()
+                # Temperatura
+                temp = data_current['main']['temp']
+                temperatureNow.text = f'{temp:.0f}'
+                temperatureNow.update()
+                # Descrição do Clima
+                weather_description = data_current['weather'][0]['description']
+                descriptionNow.value = f"{weather_description.capitalize()}"
+                descriptionNow.update()
+                # Humidade
+                humidity = data_current['main']['humidity']
+                humidityValue.value = f"{humidity}%"
+                humidityValue.update()
+                # Velocidade do vento
+                windspeed = data_current['wind']['speed']
+                windSpeedValue.value = f"{windspeed} km/h"
+                windSpeedValue.update()
+                # Nome da cidade buscada
+                cityName.value = data_current['name']
+                cityName.update()
+                # Verificar e exibir a quantidade de rainfall, se disponível
+                if 'rain' in data_current:
+                    rainfall = data_current['rain'].get('1h', 0)  # Obtém a precipitação da última hora, se disponível
+                    max_rainfall = 10.0  # Valor de referência para cálculo da porcentagem
+                    rainfall_percentage = (rainfall / max_rainfall) * 100
+                    rainFallValue.value = f"{rainfall:.2f} mm"
+                    rainFallValue.update()
+                    logging.info(f"Rainfall: {rainfall}mm, which is {rainfall_percentage:.2f}% of the reference value.")
+                else:
+                    logging.info("No rainfall data available.")
+
+                logging.info("Clima atualizado com sucesso!")
+            else:
+                logging.warning("Dados incompletos na resposta da API.")
+        except requests.exceptions.RequestException as err:
+            logging.error(f"Erro na requisição: {err}")
 
     def handle_resize(e):
         print(f"Window resized to: {page.window.width}x{page.window.height}")
@@ -33,33 +180,75 @@ def Weather(page: ft.Page):
 
     page.on_resized = handle_resize
 
+    days = ft.Tabs(
+        selected_index=1,
+        animation_duration=300,
+        label_color=ft.colors.BLACK,
+        indicator_color=ft.colors.WHITE,
+        divider_color=ft.colors.WHITE,
+        unselected_label_color=ft.colors.GREY_500,
+        scrollable=False,
+        tabs=[
+            ft.Tab(
+                text="Tab 1",
+                content=ft.Container(
+                    content=ft.Text("This is Tab 1"), alignment=ft.alignment.center
+                ),
+            ),
+            ft.Tab(
+                tab_content=ft.Icon(ft.icons.SEARCH),
+                content=ft.Text("This is Tab 2"),
+            ),
+            ft.Tab(
+                text="Tab 3",
+                icon=ft.icons.SETTINGS,
+                content=ft.Text("This is Tab 3"),
+            ),
+        ]
+    )
+
     return ft.Container(
         bgcolor=ft.colors.DEEP_PURPLE_300,
         padding=20,
         content=ft.Column(
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
-                ft.Text("Washington, DC, USA", theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM, color=ft.colors.BLACK,
-                        size=30),
-                ft.Text(
+                cityName := ft.Text("Washington, DC, USA", theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM,
+                                    color=ft.colors.BLACK,
+                                    size=30),
+                dateNow := ft.Text(
                     value="Tue, jun 30", size=20, color=ft.colors.GREY_700
                 ),
                 ft.ElevatedButton(
                     text="Coordenadas Geolocator",
-                    on_click=handle_get_current_position
+                    on_click=get_weather_by_coordinates,
+                ),
+                ft.Row(
+                    controls=[
+                        LanguageSelector,
+                        UnitsSelector,
+                    ]
+                ),
+                searchInput := ft.TextField(
+                    label="Search",
+                    icon=ft.icons.SEARCH,
+                ),
+                ft.ElevatedButton(
+                    text="Buscar",
+                    on_click=weather,
                 ),
                 ft.ResponsiveRow(
                     controls=[
                         ft.Row(
                             alignment=ft.MainAxisAlignment.SPACE_AROUND,
                             controls=[
-                                ft.Image(src="images/iconesWeather/chuva.png", width=150, height=200),
+                                iconeNow := ft.Image(src="images/iconesWeather/chuva.png", width=150, height=200),
                                 ft.Column(
                                     alignment=ft.MainAxisAlignment.CENTER,
                                     controls=[
                                         ft.Text(
                                             spans=[
-                                                ft.TextSpan(
+                                                temperatureNow := ft.TextSpan(
                                                     text="23",
                                                     style=ft.TextStyle(
                                                         size=70,
@@ -67,17 +256,9 @@ def Weather(page: ft.Page):
                                                         color=ft.colors.GREY_900
                                                     )
                                                 ),
-                                                ft.TextSpan(
-                                                    text="°C",
-                                                    style=ft.TextStyle(
-                                                        size=30,
-                                                        weight=ft.FontWeight.W_600,
-                                                        color=ft.colors.GREY_700
-                                                    )
-                                                ),
                                             ]
                                         ),
-                                        ft.Text(
+                                        descriptionNow := ft.Text(
                                             value="Chuva forte", size=20, color=ft.colors.BLUE_GREY_700
                                         ),
                                     ]
@@ -122,8 +303,8 @@ def Weather(page: ft.Page):
                                                         ),
                                                     ]
                                                 ),
-                                                ft.Text(
-                                                    value="100%", size=20, color=ft.colors.BLUE_GREY_700,
+                                                rainFallValue := ft.Text(
+                                                    value="Sem precipitação", size=20, color=ft.colors.BLUE_GREY_700,
                                                     weight=ft.FontWeight.W_600
 
                                                 )
@@ -159,7 +340,7 @@ def Weather(page: ft.Page):
                                                         ),
                                                     ]
                                                 ),
-                                                ft.Text(
+                                                humidityValue := ft.Text(
                                                     value="100%", size=20, color=ft.colors.BLUE_GREY_700,
                                                     weight=ft.FontWeight.W_600
                                                 )
@@ -195,7 +376,7 @@ def Weather(page: ft.Page):
                                                         ),
                                                     ]
                                                 ),
-                                                ft.Text(
+                                                windSpeedValue := ft.Text(
                                                     value="11km/h", size=20, color=ft.colors.BLUE_GREY_700,
                                                     weight=ft.FontWeight.W_600
                                                 )
