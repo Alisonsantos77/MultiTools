@@ -1,10 +1,13 @@
-import threading
 import flet as ft
 import speedtest
+import threading
+import asyncio
 
 
 def Speed(page: ft.Page):
     page.title = "Speed Test"
+
+    image_foguete = ft.Ref[ft.Image]()
 
     # Função para executar o teste de velocidade
     def run_speed_test():
@@ -79,10 +82,6 @@ def Speed(page: ft.Page):
         threading.Thread(target=run_speed_test).start()
 
     # Função de efeito hover na imagem
-    def image_hover(e):
-        imagem = e.control.content
-        imagem.scale = ft.Scale(scale=1.2) if imagem.scale.scale == 1 else ft.Scale(scale=1)
-        imagem.update()
 
     # Elementos da página
     download_result = ft.TextSpan("0.00 Mbps", style=ft.TextStyle(size=20))
@@ -111,17 +110,40 @@ def Speed(page: ft.Page):
         height=400
     )
 
+    async def animate_image(e=None):
+        while True:
+            image_foguete.current.offset.y = -0.4
+            image_foguete.current.scale = 1.3
+            image_foguete.current.rotate.angle = 0.2
+            image_foguete.current.update()
+            await asyncio.sleep(4)
+
+            image_foguete.current.offset.y = +0.2
+            image_foguete.current.scale = 1
+            image_foguete.current.rotate.angle = 0
+            image_foguete.current.update()
+            await asyncio.sleep(4)
+
+    page.run_task(animate_image)
     # Definindo o layout da página speedtest
     speedtest_page = ft.Column(
+        alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
         controls=[
             ft.ResponsiveRow(
                 columns=12,
                 controls=[
                     btn_Start := ft.Container(
-                        content=ft.Image(
+                        content=
+                        ft.Image(
+                            ref=image_foguete,
                             col={'xs': 6, 'sm': 12},
                             src='/images/icone_home.png',
+                            rotate=ft.Rotate(angle=0),
+                            offset=ft.Offset(x=0, y=0),
+                            animate_offset=ft.Animation(4000, ft.AnimationCurve.EASE),
+                            animate_scale=ft.Animation(4000, ft.AnimationCurve.EASE),
+                            animate_rotation=ft.Animation(3000, ft.AnimationCurve.BOUNCE_IN),
                             scale=ft.Scale(scale=1),
                             height=200,
                             fit=ft.ImageFit.CONTAIN,
@@ -130,7 +152,6 @@ def Speed(page: ft.Page):
                         padding=ft.padding.symmetric(vertical=100),
                         tooltip='Iniciar teste',
                         animate=ft.animation.Animation(300, ft.AnimationCurve.EASE_IN_CUBIC),
-                        on_hover=image_hover,
                         clip_behavior=ft.ClipBehavior.ANTI_ALIAS
                     ),
                     ft.Container(
@@ -148,8 +169,13 @@ def Speed(page: ft.Page):
                         col={'xs': 10, 'sm': 12},
                         text_align=ft.TextAlign.CENTER,
                         spans=[
-                            ft.TextSpan("Velocidade de Download: ",
-                                        style=ft.TextStyle(weight=ft.FontWeight.BOLD, size=30)),
+                            ft.TextSpan(
+                                text="Velocidade de Download: ",
+                                style=ft.TextStyle(
+                                    weight=ft.FontWeight.BOLD,
+                                    size=30,
+                                    color=ft.colors.PRIMARY)
+                            ),
                             download_result
                         ]
                     ),
@@ -157,8 +183,12 @@ def Speed(page: ft.Page):
                         col={'xs': 10, 'sm': 12},
                         text_align=ft.TextAlign.CENTER,
                         spans=[
-                            ft.TextSpan("Velocidade de Upload: ",
-                                        style=ft.TextStyle(weight=ft.FontWeight.BOLD, size=30)),
+                            ft.TextSpan(text="Velocidade de Upload: ",
+                                        style=ft.TextStyle(
+                                            weight=ft.FontWeight.BOLD,
+                                            size=30,
+                                            color=ft.colors.PRIMARY)
+                                        ),
                             upload_result
                         ]
                     )
