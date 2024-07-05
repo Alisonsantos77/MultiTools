@@ -2,14 +2,16 @@ import flet as ft
 import requests
 from icecream import ic
 from datetime import datetime
-import aiohttp
+import os
 import logging
 
 
 def Weather(page: ft.Page):
     page.title = "Weather App"
-    key_weather = "xxxxxxxxxxxxxxxx"
-
+    key_weather = "xxxxxxxxxx"
+    api_openweathermap = os.getenv("API_CLIMA")
+    api_whatsapp = os.getenv("URL_WHATSAPP")
+    print(f"{api_openweathermap} e {api_whatsapp}")
     # Refs
     ClimaNowText = ft.Ref[ft.Text]()
     TempNowText = ft.Ref[ft.Text]()
@@ -32,6 +34,7 @@ def Weather(page: ft.Page):
             ft.dropdown.Option("es", "Espanhol")
         ],
     )
+    
 
     # Definir o dropdown para seleção de unidades
     UnitsSelector = ft.Dropdown(
@@ -44,7 +47,8 @@ def Weather(page: ft.Page):
         ],
     )
 
-    def weather(e):
+    def get_weather_by_input(e):
+        from main import searchInput
         cidade = searchInput.value
         if not cidade:
             print("Por favor, digite um nome de cidade válido.")
@@ -130,6 +134,7 @@ def Weather(page: ft.Page):
                 # Atualiza icone
                 icone = data_current['weather'][0]['icon']
                 iconeNow.src = f'https://openweathermap.org/img/wn/{icone}@2x.png'
+                iconeNow.scale = 1.5
                 iconeNow.update()
                 # Temperatura
                 temp = data_current['main']['temp']
@@ -180,19 +185,242 @@ def Weather(page: ft.Page):
 
     page.on_resized = handle_resize
 
+    CardsWeather = ft.Container(
+        bgcolor=ft.colors.WHITE60,
+        padding=25,
+        margin=10,
+        border_radius=50,
+        content=ft.Column(
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Text(
+                    value="00:00", size=20, color=ft.colors.PRIMARY,
+                    weight=ft.FontWeight.W_600
+                ),
+                ft.Image(
+                    src="images/iconesWeather/sol_nuvem.png",
+                    width=50,
+                    height=50,
+                ),
+                ft.Text(
+                    value="23°", size=24, color=ft.colors.PRIMARY,
+                    weight=ft.FontWeight.W_700
+                ),
+            ]
+        )
+    ),
+    ft.Container(
+        bgcolor=ft.colors.WHITE60,
+        padding=25,
+        margin=10,
+        border_radius=50,
+        content=ft.Column(
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Text(
+                    value="03:00",
+                    size=20,
+                    color=ft.colors.PRIMARY,
+                    weight=ft.FontWeight.W_600
+                ),
+                ft.Image(
+                    src="images/iconesWeather/chuva.png",
+                    width=50,
+                    height=50,
+                ),
+                ft.Text(
+                    value="28°",
+                    size=24,
+                    color=ft.colors.PRIMARY,
+                    weight=ft.FontWeight.W_700
+                ),
+            ]
+        )
+    ),
+    ft.Container(
+        bgcolor=ft.colors.WHITE60,
+        padding=25,
+        margin=10,
+        border_radius=50,
+        content=ft.Column(
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Text(
+                    value="06:00",
+                    size=20,
+                    color=ft.colors.PRIMARY,
+                    weight=ft.FontWeight.W_600
+                ),
+                ft.Image(
+                    src="images/iconesWeather/chuva_forte.png",
+                    width=50,
+                    height=50,
+                ),
+                ft.Text(
+                    value="30°",
+                    size=24,
+                    color=ft.colors.PRIMARY,
+                    weight=ft.FontWeight.W_700
+                ),
+            ]
+        )
+    ),
+    ft.Container(
+        bgcolor=ft.colors.WHITE60,
+        padding=25,
+        margin=10,
+        border_radius=50,
+        content=ft.Column(
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Text(
+                    value="09:00",
+                    size=20,
+                    color=ft.colors.PRIMARY,
+                    weight=ft.FontWeight.W_600
+                ),
+                ft.Image(
+                    src="images/iconesWeather/raio.png",
+                    width=50,
+                    height=50,
+                ),
+                ft.Text(
+                    value="34°",
+                    size=24,
+                    color=ft.colors.PRIMARY,
+                    weight=ft.FontWeight.W_700
+                ),
+            ]
+        )
+    ),
+    ft.Container(
+        bgcolor=ft.colors.WHITE60,
+        padding=25,
+        margin=10,
+        border_radius=50,
+        content=ft.Column(
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Text(
+                    value="12:00",
+                    size=20,
+                    color=ft.colors.PRIMARY,
+                    weight=ft.FontWeight.W_600
+                ),
+                ft.Image(
+                    src="images/iconesWeather/ventos.png",
+                    width=50,
+                    height=50,
+                ),
+                ft.Text(
+                    value="23°",
+                    size=24,
+                    color=ft.colors.PRIMARY,
+                    weight=ft.FontWeight.W_700
+                ),
+            ]
+        )
+    ),
+    ft.Container(
+        bgcolor=ft.colors.WHITE60,
+        padding=25,
+        margin=10,
+        border_radius=50,
+        content=ft.Column(
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Text(
+                    value="15:00",
+                    size=20,
+                    color=ft.colors.PRIMARY,
+                    weight=ft.FontWeight.W_600
+                ),
+                ft.Image(
+                    src="images/iconesWeather/sol_nuvem.png",
+                    width=50,
+                    height=50,
+                ),
+                ft.Text(
+                    value="22°",
+                    size=24,
+                    color=ft.colors.PRIMARY,
+                    weight=ft.FontWeight.W_700
+                ),
+            ]
+        )
+    ),
+    ft.Container(
+        bgcolor=ft.colors.WHITE60,
+        padding=25,
+        margin=10,
+        border_radius=50,
+        content=ft.Column(
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Text(
+                    value="18:00",
+                    size=20,
+                    color=ft.colors.PRIMARY,
+                    weight=ft.FontWeight.W_600
+                ),
+                ft.Image(
+                    src="images/iconesWeather/nuvem_raio.png",
+                    width=50,
+                    height=50,
+                ),
+                ft.Text(
+                    value="23°",
+                    size=24,
+                    color=ft.colors.PRIMARY,
+                    weight=ft.FontWeight.W_700
+                ),
+            ]
+        )
+    ),
+
     days = ft.Tabs(
         selected_index=1,
         animation_duration=300,
-        label_color=ft.colors.BLACK,
         indicator_color=ft.colors.WHITE,
         divider_color=ft.colors.WHITE,
         unselected_label_color=ft.colors.GREY_500,
         scrollable=False,
+        height=500,
+        label_color=ft.colors.PRIMARY,
         tabs=[
             ft.Tab(
-                text="Tab 1",
+                text="Segunda",
                 content=ft.Container(
-                    content=ft.Text("This is Tab 1"), alignment=ft.alignment.center
+                    bgcolor=ft.colors.WHITE60,
+                    padding=25,
+                    margin=10,
+                    border_radius=50,
+                    content=ft.Column(
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[
+                            ft.Text(
+                                value="00:00", size=20, color=ft.colors.PRIMARY,
+                                weight=ft.FontWeight.W_600
+                            ),
+                            ft.Image(
+                                src="images/iconesWeather/sol_nuvem.png",
+                                width=50,
+                                height=50,
+                            ),
+                            ft.Text(
+                                value="23°", size=24, color=ft.colors.PRIMARY,
+                                weight=ft.FontWeight.W_700
+                            ),
+                        ]
+                    )
                 ),
             ),
             ft.Tab(
@@ -204,39 +432,26 @@ def Weather(page: ft.Page):
                 icon=ft.icons.SETTINGS,
                 content=ft.Text("This is Tab 3"),
             ),
-        ]
+        ],
+        expand=True
     )
 
     return ft.Container(
-        bgcolor=ft.colors.DEEP_PURPLE_300,
-        padding=20,
         content=ft.Column(
             alignment=ft.MainAxisAlignment.CENTER,
             controls=[
-                cityName := ft.Text("Washington, DC, USA", theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM,
-                                    color=ft.colors.BLACK,
-                                    size=30),
+                cityName := ft.Text(
+                    value="Washington, DC, USA",
+                    theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM,
+                    size=30,
+                    color=ft.colors.PRIMARY
+                ),
                 dateNow := ft.Text(
-                    value="Tue, jun 30", size=20, color=ft.colors.GREY_700
+                    value="Tue, jun 30", size=20
                 ),
                 ft.ElevatedButton(
                     text="Coordenadas Geolocator",
-                    on_click=get_weather_by_coordinates,
-                ),
-                ft.Row(
-                    controls=[
-                        LanguageSelector,
-                        UnitsSelector,
-                    ]
-                ),
-                searchInput := ft.TextField(
-                    label="Search",
-                    icon=ft.icons.SEARCH,
-                ),
-                ft.ElevatedButton(
-                    text="Buscar",
-                    on_click=weather,
-                ),
+                    on_click=get_weather_by_coordinates),
                 ft.ResponsiveRow(
                     controls=[
                         ft.Row(
@@ -253,13 +468,15 @@ def Weather(page: ft.Page):
                                                     style=ft.TextStyle(
                                                         size=70,
                                                         weight=ft.FontWeight.W_700,
-                                                        color=ft.colors.GREY_900
+                                                        color=ft.colors.PRIMARY
                                                     )
                                                 ),
                                             ]
                                         ),
                                         descriptionNow := ft.Text(
-                                            value="Chuva forte", size=20, color=ft.colors.BLUE_GREY_700
+                                            value="Chuva forte",
+                                            size=20,
+                                            color=ft.colors.ON_BACKGROUND
                                         ),
                                     ]
                                 )
@@ -298,13 +515,13 @@ def Weather(page: ft.Page):
                                                         ),
                                                         ft.Text(
                                                             value="RainFall", size=20,
-                                                            color=ft.colors.BLUE_GREY_700,
+                                                            color=ft.colors.PRIMARY,
                                                             weight=ft.FontWeight.W_600
                                                         ),
                                                     ]
                                                 ),
                                                 rainFallValue := ft.Text(
-                                                    value="Sem precipitação", size=20, color=ft.colors.BLUE_GREY_700,
+                                                    value="Sem precipitação", size=20, color=ft.colors.PRIMARY,
                                                     weight=ft.FontWeight.W_600
 
                                                 )
@@ -335,13 +552,13 @@ def Weather(page: ft.Page):
                                                         ),
                                                         ft.Text(
                                                             value="Humidity", size=20,
-                                                            color=ft.colors.BLUE_GREY_700,
+                                                            color=ft.colors.PRIMARY,
                                                             weight=ft.FontWeight.W_600
                                                         ),
                                                     ]
                                                 ),
                                                 humidityValue := ft.Text(
-                                                    value="100%", size=20, color=ft.colors.BLUE_GREY_700,
+                                                    value="100%", size=20, color=ft.colors.PRIMARY,
                                                     weight=ft.FontWeight.W_600
                                                 )
                                             ]
@@ -371,13 +588,13 @@ def Weather(page: ft.Page):
                                                                              height=50),
                                                         ),
                                                         ft.Text(
-                                                            value="Wind", size=20, color=ft.colors.BLUE_GREY_700,
+                                                            value="Wind", size=20, color=ft.colors.PRIMARY,
                                                             weight=ft.FontWeight.W_600
                                                         ),
                                                     ]
                                                 ),
                                                 windSpeedValue := ft.Text(
-                                                    value="11km/h", size=20, color=ft.colors.BLUE_GREY_700,
+                                                    value="11km/h", size=20, color=ft.colors.PRIMARY,
                                                     weight=ft.FontWeight.W_600
                                                 )
                                             ]
@@ -390,184 +607,8 @@ def Weather(page: ft.Page):
                     )
                 ),
                 ft.Row(
-                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
-                    ref=RowCards,
                     controls=[
-                        ft.Container(
-                            bgcolor=ft.colors.WHITE60,
-                            padding=25,
-                            margin=10,
-                            border_radius=50,
-                            content=ft.Column(
-                                alignment=ft.MainAxisAlignment.CENTER,
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                controls=[
-                                    ft.Text(
-                                        value="00:00", size=20, color=ft.colors.GREY_700,
-                                        weight=ft.FontWeight.W_600
-                                    ),
-                                    ft.Image(
-                                        src="images/iconesWeather/sol_nuvem.png",
-                                        width=50,
-                                        height=50,
-                                    ),
-                                    ft.Text(
-                                        value="23°", size=24, color=ft.colors.BLACK,
-                                        weight=ft.FontWeight.W_700
-                                    ),
-                                ]
-                            )
-                        ),
-                        ft.Container(
-                            bgcolor=ft.colors.WHITE60,
-                            padding=25,
-                            margin=10,
-                            border_radius=50,
-                            content=ft.Column(
-                                alignment=ft.MainAxisAlignment.CENTER,
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                controls=[
-                                    ft.Text(
-                                        value="03:00", size=20, color=ft.colors.GREY_700,
-                                        weight=ft.FontWeight.W_600
-                                    ),
-                                    ft.Image(
-                                        src="images/iconesWeather/chuva.png",
-                                        width=50,
-                                        height=50,
-                                    ),
-                                    ft.Text(
-                                        value="28°", size=24, color=ft.colors.BLACK,
-                                        weight=ft.FontWeight.W_700
-                                    ),
-                                ]
-                            )
-                        ),
-                        ft.Container(
-                            bgcolor=ft.colors.WHITE60,
-                            padding=25,
-                            margin=10,
-                            border_radius=50,
-                            content=ft.Column(
-                                alignment=ft.MainAxisAlignment.CENTER,
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                controls=[
-                                    ft.Text(
-                                        value="06:00", size=20, color=ft.colors.GREY_700,
-                                        weight=ft.FontWeight.W_600
-                                    ),
-                                    ft.Image(
-                                        src="images/iconesWeather/chuva_forte.png",
-                                        width=50,
-                                        height=50,
-                                    ),
-                                    ft.Text(
-                                        value="30°", size=24, color=ft.colors.BLACK,
-                                        weight=ft.FontWeight.W_700
-                                    ),
-                                ]
-                            )
-                        ),
-                        ft.Container(
-                            bgcolor=ft.colors.WHITE60,
-                            padding=25,
-                            margin=10,
-                            border_radius=50,
-                            content=ft.Column(
-                                alignment=ft.MainAxisAlignment.CENTER,
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                controls=[
-                                    ft.Text(
-                                        value="09:00", size=20, color=ft.colors.GREY_700,
-                                        weight=ft.FontWeight.W_600
-                                    ),
-                                    ft.Image(
-                                        src="images/iconesWeather/raio.png",
-                                        width=50,
-                                        height=50,
-                                    ),
-                                    ft.Text(
-                                        value="34°", size=24, color=ft.colors.BLACK,
-                                        weight=ft.FontWeight.W_700
-                                    ),
-                                ]
-                            )
-                        ),
-                        ft.Container(
-                            bgcolor=ft.colors.WHITE60,
-                            padding=25,
-                            margin=10,
-                            border_radius=50,
-                            content=ft.Column(
-                                alignment=ft.MainAxisAlignment.CENTER,
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                controls=[
-                                    ft.Text(
-                                        value="12:00", size=20, color=ft.colors.GREY_700,
-                                        weight=ft.FontWeight.W_600
-                                    ),
-                                    ft.Image(
-                                        src="images/iconesWeather/ventos.png",
-                                        width=50,
-                                        height=50,
-                                    ),
-                                    ft.Text(
-                                        value="23°", size=24, color=ft.colors.BLACK,
-                                        weight=ft.FontWeight.W_700
-                                    ),
-                                ]
-                            )
-                        ),
-                        ft.Container(
-                            bgcolor=ft.colors.WHITE60,
-                            padding=25,
-                            margin=10,
-                            border_radius=50,
-                            content=ft.Column(
-                                alignment=ft.MainAxisAlignment.CENTER,
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                controls=[
-                                    ft.Text(
-                                        value="15:00", size=20, color=ft.colors.GREY_700,
-                                        weight=ft.FontWeight.W_600
-                                    ),
-                                    ft.Image(
-                                        src="images/iconesWeather/sol_nuvem.png",
-                                        width=50,
-                                        height=50,
-                                    ),
-                                    ft.Text(
-                                        value="22°", size=24, color=ft.colors.BLACK,
-                                        weight=ft.FontWeight.W_700
-                                    ),
-                                ]
-                            )
-                        ),
-                        ft.Container(
-                            bgcolor=ft.colors.WHITE60,
-                            padding=25,
-                            margin=10,
-                            border_radius=50,
-                            content=ft.Column(
-                                alignment=ft.MainAxisAlignment.CENTER,
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                controls=[
-                                    ft.Text(
-                                        value="18:00", size=20, color=ft.colors.GREY_700,
-                                        weight=ft.FontWeight.W_600
-                                    ),
-                                    ft.Image(
-                                        src="images/iconesWeather/nuvem_raio.png",
-                                        width=50,
-                                        height=50,
-                                    ),
-                                    ft.Text(
-                                        value="23°", size=24, color=ft.colors.BLACK,
-                                        weight=ft.FontWeight.W_700
-                                    ),
-                                ]
-                            )
-                        ),
+                        days
                     ]
                 ),
             ]
