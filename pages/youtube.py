@@ -15,10 +15,7 @@ DOWNLOAD_TYPE = None
 
 def Youtube(page: ft.Page):
     page.title = "Youtube Downloader"
-    page.window.height = 750
-    page.window.width = 700
-    page.window.max_height = 750
-    page.window.max_width = 700
+
 
     SNACK_TEXT = ft.Ref[ft.Text]()
     def handle_resize(e):
@@ -570,6 +567,7 @@ def Youtube(page: ft.Page):
     return ft.Container(
         alignment=ft.alignment.center,
         margin=ft.margin.all(30),
+        height=800,
         shadow=ft.BoxShadow(blur_radius=300, color=ft.colors.RED_ACCENT),
         content=ft.ResponsiveRow(
             columns=12,
