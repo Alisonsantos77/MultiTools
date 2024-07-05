@@ -8,9 +8,28 @@ def main(page: ft.Page):
     # Refs
     icone_tema = ft.Ref[ft.IconButton]()
     icone_menu = ft.Ref[ft.IconButton]()
+    rowMetrics = ft.Ref[ft.Row]()
+    rowLanguage = ft.Ref[ft.Row]()
 
     page.window.title_bar_hidden = True
     page.window.title_bar_buttons_hidden = True
+
+    def handle_resize(e):
+        print(f"Window resized to: {page.window.width}x{page.window.height}")
+        if page.window.width <= 700:
+            rowMetrics.current.scroll = ft.ScrollMode.HIDDEN
+            rowMetrics.current.update()
+            rowLanguage.current.scroll = ft.ScrollMode.HIDDEN
+            rowLanguage.current.update()
+            page.update()
+        else:
+            rowMetrics.current.scroll = None
+            rowMetrics.current.update()
+            rowLanguage.current.scroll = None
+            rowLanguage.current.update()
+            page.update()
+
+    page.on_resized = handle_resize
 
     def change_route(e):
         match e.control.selected_index:
@@ -33,10 +52,10 @@ def main(page: ft.Page):
 
     def change_color_scheme(e):
         selected_color = e.control.selected
-        if "red" in selected_color:
-            page.theme = ft.colors.RED
+        if "amber" in selected_color:
+            page.theme = ft.colors.AMBER
             page.theme = ft.Theme(
-                color_scheme=ft.ColorScheme(primary=ft.colors.RED))
+                color_scheme=ft.ColorScheme(primary=ft.colors.AMBER))
         elif "blue" in selected_color:
             page.theme = ft.colors.BLUE
             page.theme = ft.Theme(
@@ -60,18 +79,26 @@ def main(page: ft.Page):
         page.update()
 
     def open_dialog(e):
-        dlg.open = True
+        dlg_suporte.open = True
         page.update()
 
     def close_dialog(e):
-        dlg.open = False
+        dlg_suporte.open = False
         page.update()
 
     def minimize_window(e):
         page.window.minimized = True
         page.update()
 
-    dlg = ft.AlertDialog(
+    def maximize_window(e):
+        if page.window.maximized:
+            page.window.maximized = False
+            page.update()
+        else:
+            page.window.maximized = True
+            page.update()
+
+    dlg_suporte = ft.AlertDialog(
         title=ft.Row(
             [
                 ft.Text("Fale conosco", size=24,
@@ -137,7 +164,7 @@ def main(page: ft.Page):
         actions_alignment=ft.MainAxisAlignment.SPACE_AROUND,
     )
 
-    page.overlay.append(dlg)
+    page.overlay.append(dlg_suporte)
 
     menu = ft.NavigationDrawer(
         controls=[
@@ -177,13 +204,13 @@ def main(page: ft.Page):
                                 color=ft.colors.GREY_700),
                         ft.SegmentedButton(
                             on_change=change_color_scheme,
-                            selected={"red"},
+                            selected={"amber"},
                             segments=[
                                 ft.Segment(
-                                    value="red",
-                                    label=ft.Text("Red", color=ft.colors.RED),
+                                    value="amber",
+                                    label=ft.Text(value="Amber", color=ft.colors.AMBER),
                                     icon=ft.Icon(ft.icons.PALETTE,
-                                                 color=ft.colors.RED)
+                                                 color=ft.colors.AMBER)
                                 ),
                                 ft.Segment(
                                     value="blue",
@@ -237,16 +264,18 @@ def main(page: ft.Page):
             controls=[
                 ft.Icon(ft.icons.WARNING, color=ft.colors.RED, size=30),
                 ft.Text(
-                    value="Tem certeza que deseja fechar o aplicativo?",
+                    value="Tem certeza?",
+                    weight=ft.FontWeight.W_600,
                     size=16,
-                    color=ft.colors.RED
+                    color=ft.colors.RED,
+                    overflow=ft.TextOverflow.ELLIPSIS
                 )
             ],
             alignment=ft.MainAxisAlignment.CENTER
         ),
         actions=[
             ft.TextButton(
-                "Certeza",
+                "Sim, eu tenho",
                 on_click=close_window,
                 style=ft.ButtonStyle(color=ft.colors.RED)
             ),
@@ -263,7 +292,76 @@ def main(page: ft.Page):
     # Adicionando o diálogo à sobreposição da página
     page.overlay.append(close_dialog)
 
-    # Atualizando o AppBar
+    def dlg_search_open(e):
+        dlg_search.open = True
+        page.update()
+
+    def dlg_search_close(e):
+        dlg_search.open = False
+        page.update()
+
+    dlg_search = ft.AlertDialog(
+        title=ft.Text("Buscar cidade", size=24, weight=ft.FontWeight.BOLD),
+        content=ft.Column(
+            scroll=ft.ScrollMode.AUTO,
+            controls=[
+                ft.Text("Selecione a unidade de medida:", size=18, weight=ft.FontWeight.W_500),
+                ft.ResponsiveRow(
+                    controls=[
+                        ft.Row(
+                            ref=rowMetrics,
+                            scroll=ft.ScrollMode.AUTO,
+                            spacing=10,
+                            controls=[
+                                ft.Checkbox(label="Métrico (°C)"),
+                                ft.Checkbox(label="Imperial (°F)"),
+                                ft.Checkbox(label="Kelvin (K)"),
+                            ]
+                        )
+                    ],
+                    alignment=ft.MainAxisAlignment.START
+                ),
+                ft.Text("Selecione o idioma:", size=18, weight=ft.FontWeight.W_500),
+                ft.ResponsiveRow(
+                    controls=[
+                        ft.Row(
+                            ref=rowLanguage,
+                            spacing=10,
+                            scroll=ft.ScrollMode.AUTO,
+                            controls=[
+                                ft.Checkbox(label="Português"),
+                                ft.Checkbox(label="Inglês"),
+                                ft.Checkbox(label="Espanhol"),
+                            ]
+                        )
+                    ],
+                    alignment=ft.MainAxisAlignment.START
+                ),
+                searchInput := ft.TextField(
+                    label="Cidade",
+                    hint_text="Digite o nome da cidade",
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.START,
+            spacing=10
+        ),
+        actions=[
+            ft.TextButton(
+                "Buscar",
+                style=ft.ButtonStyle(color=ft.colors.WHITE)
+            ),
+            ft.TextButton(
+                "Cancelar",
+                on_click=lambda e: print("Cancelar clicado"),
+                style=ft.ButtonStyle(color=ft.colors.RED)
+            ),
+        ],
+        actions_alignment=ft.MainAxisAlignment.END,
+        elevation=10,
+    )
+
+    page.overlay.append(dlg_search)
+
     appbar_menu = ft.AppBar(
         toolbar_height=50,
         color=ft.colors.INVERSE_PRIMARY,
@@ -289,6 +387,70 @@ def main(page: ft.Page):
                                 icon=ft.icons.MINIMIZE,
                                 on_click=minimize_window,
                                 tooltip="Minimizar",
+                            ),
+                            ft.IconButton(
+                                icon=ft.icons.ASPECT_RATIO,
+                                on_click=maximize_window,
+                                tooltip="Maximizar",
+                            ),
+                            ft.IconButton(
+                                icon=ft.icons.CLOSE,
+                                on_click=confirm_close_window,
+                                tooltip="Fechar",
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.END,  # Alinhamento à direita
+                    ),
+                    padding=ft.padding.symmetric(horizontal=10),
+                    expand=True,
+                )
+            ),
+        ],
+    )
+    appbar_weather = ft.AppBar(
+        toolbar_height=50,
+        color=ft.colors.INVERSE_PRIMARY,
+        leading=ft.WindowDragArea(
+            ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.IconButton(
+                            ref=icone_menu,
+                            icon=ft.icons.MENU,
+                            on_click=abrir_menu
+                        ),
+                    ],
+                    # alignment=ft.MainAxisAlignment.END,  # Alinhamento à direita
+                ),
+                padding=ft.padding.symmetric(horizontal=10),
+                expand=True,
+            )
+        ),
+        actions=[
+            ft.WindowDragArea(
+                ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.IconButton(
+                                icon=ft.icons.SEARCH,
+                                on_click=dlg_search_open,
+                                tooltip="Buscar cidade",
+                            ),
+                            ft.IconButton(
+                                icon=ft.icons.DARK_MODE,
+                                ref=icone_tema,
+                                on_click=troca_tema,
+                                tooltip="Modo Escuro",
+                            ),
+                            ft.IconButton(
+                                icon=ft.icons.MINIMIZE,
+                                on_click=minimize_window,
+                                tooltip="Minimizar",
+                            ),
+                            ft.IconButton(
+                                icon=ft.icons.ASPECT_RATIO,
+                                on_click=maximize_window,
+                                tooltip="Maximizar",
                             ),
                             ft.IconButton(
                                 icon=ft.icons.CLOSE,
@@ -321,10 +483,11 @@ def main(page: ft.Page):
             page.views.append(
                 ft.View(
                     route='/weather',
-                    appbar=appbar_menu,
+                    appbar=appbar_weather,
                     drawer=menu,
+                    scroll=ft.ScrollMode.AUTO,
                     controls=[
-                        Weather(page)
+                        Weather(page),
                     ],
                 )
             )
@@ -333,6 +496,7 @@ def main(page: ft.Page):
                 ft.View(
                     route='/youtube',
                     appbar=appbar_menu,
+                    scroll=ft.ScrollMode.AUTO,
                     drawer=menu,
                     controls=[
                         Youtube(page)
